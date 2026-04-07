@@ -7,11 +7,33 @@
         {% if intervention %}Modifier l'intervention{% else %}Nouvelle intervention{% endif %}
     </h2>
 
-    <form method="post">
+    <form method="post" class="space-y-4">
         {% csrf_token %}
 
-        <div class="space-y-4">
-            {{ form.as_p }}
+        {{ form.non_field_errors }}
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.ticket.label }}</label>
+            {{ form.ticket }}
+            {% if form.ticket.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.ticket.errors|striptags }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.description.errors|striptags }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex items-center gap-3">
+            {{ form.est_termine }}
+            <label class="text-sm font-medium text-gray-700">{{ form.est_termine.label }}</label>
+            {% if form.est_termine.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.est_termine.errors|striptags }}</p>
+            {% endif %}
         </div>
 
         <div class="mt-4 flex gap-2">

@@ -3,8 +3,8 @@
 {% block content %}
 
 <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Interventions</h2>
-    {% if request.user.role == "technicien" or request.user.role == "admin" %}
+    <h2 class="text-2xl font-bold">Interventions <br> Bienvenue <span class="text-blue-600 font-extrabold" style="color: brown;">{{request.user.username}}</span> !</h2>
+    {% if request.user.role == "technicien" %}
     <a href="{% url 'creer_intervention' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
         + Nouvelle intervention
     </a>
@@ -16,10 +16,12 @@
             <tr>
                 <th class="p-3">ID</th>
                 <th class="p-3">Ticket</th>
+                {% if request.user.role == "admin" %}
                 <th class="p-3">Technicien</th>
+                {% endif %}
                 <th class="p-3">Date intervention</th>
                 <th class="p-3">Terminé</th>
-                {% if request.user.role == "technicien" or request.user.role == "admin" %}
+                {% if request.user.role == "technicien" %}
                 <th class="p-3"></th>
                 {% endif %}
             </tr>
@@ -29,7 +31,9 @@
             <tr class="border-b hover:bg-gray-50">
                 <td class="p-3">{{ intervention.id }}</td>
                 <td class="p-3">{{ intervention.ticket.titre }}</td>
+                {% if request.user.role == "admin" %}
                 <td class="p-3">{{ intervention.technicien }}</td>
+                {% endif %}
                 <td class="p-3">
                     {{ intervention.date_intervention|date:"d/m/Y H:i" }}
                 </td>
@@ -44,7 +48,7 @@
                         </span>
                     {% endif %}
                 </td>
-                {% if request.user.role == "technicien" or request.user.role == "admin" %}
+                {% if request.user.role == "technicien" %}
                 <td class="p-3 text-right">
                     <a href="{% url 'editer_intervention' intervention.id %}"
                        class="text-blue-600 hover:underline text-sm">

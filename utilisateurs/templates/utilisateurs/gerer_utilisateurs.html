@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Gestion des utilisateurs</h2>
+        <p class="text-gray-600 text-sm mt-1">Ajouter, modifier ou supprimer les comptes utilisateur/technicien.</p>
+    </div>
+    <a href="{% url 'creer_utilisateur' %}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+        + Ajouter
+    </a>
+</div>
+
+<div class="bg-white shadow rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-4">Nom d'utilisateur</th>
+                    <th class="p-4">Rôle</th>
+                    <th class="p-4">Département</th>
+                    <th class="p-4">Actif</th>
+                    <th class="p-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in utilisateurs %}
+                <tr class="border-t border-gray-100">
+                    <td class="p-4 font-medium">{{ u.username }}</td>
+                    <td class="p-4">
+                        {% if u.role == "admin" %}
+                            Administrateur
+                        {% elif u.role == "technicien" %}
+                            Technicien
+                        {% else %}
+                            Utilisateur
+                        {% endif %}
+                    </td>
+                    <td class="p-4">{{ u.departement }}</td>
+                    <td class="p-4">
+                        {% if u.is_active %}
+                            <span class="inline-flex items-center rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">Actif</span>
+                        {% else %}
+                            <span class="inline-flex items-center rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-medium">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-right">
+                        <a href="{% url 'editer_utilisateur' u.id %}"
+                           class="text-blue-600 hover:underline text-sm mr-3">
+                            Modifier
+                        </a>
+                        <a href="{% url 'supprimer_utilisateur' u.id %}"
+                           class="text-red-600 hover:underline text-sm">
+                            Supprimer
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="p-6 text-center text-gray-500">
+                        Aucun utilisateur pour le moment.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+

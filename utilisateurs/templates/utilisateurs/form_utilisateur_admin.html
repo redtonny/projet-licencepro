@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6">
+    <h2 class="text-2xl font-bold mb-4">
+        Modifier l'utilisateur
+    </h2>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                    <p class="text-red-600 text-xs mt-1">
+                        {{ field.errors|striptags }}
+                    </p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="flex gap-2 pt-2">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                Enregistrer
+            </button>
+            <a href="{% url 'gerer_utilisateurs' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded-lg">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+

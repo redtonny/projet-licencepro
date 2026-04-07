@@ -3,94 +3,168 @@
 {% block content %}
 
 <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Liste des Tickets</h2>
+    <h2 class="text-2xl font-bold dark:text-white">Liste des Tickets <br> Bienvenue <span class="text-blue-600 font-extrabold" style="color: brown;">{{request.user.username}}</span> !</h2>
 
+    <!-- Nouveau ticket (navigation classique - fiable) -->
+    <a href="{% url 'creer_ticket' %}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition dark:bg-blue-500 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Nouveau Ticket
+    </a>
 
-<a href="{% url 'creer_ticket' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-    + Nouveau Ticket
-</a>
+    <!-- Modal HTMX (désactivé : on utilise la navigation classique) -->
+    <div id="ticket-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden" x-data x-show="true" @click.away="document.getElementById('ticket-modal').classList.add('hidden')">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto" @click.stop x-transition>
+            <div class="p-6 border-b dark:border-gray-700">
+                <h3 class="text-xl font-bold dark:text-white">Nouveau Ticket</h3>
+            </div>
+            <div id="ticket-modal-body" class="p-6">
+                <!-- HTMX loads form here -->
+                <div class="text-center py-8 text-gray-500">Chargement...</div>
+            </div>
+            <div class="p-6 border-t bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex gap-3">
+                <button hx-post="{% url 'creer_ticket' %}" 
+                        hx-target="#ticket-list-tbody" 
+                        hx-swap="beforeend first"
+                        hx-include="closest form"
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition font-medium">
+                    Créer
+                </button>
+                <button type="button" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg transition" @click="document.getElementById('ticket-modal').classList.add('hidden')">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>
 
-<div class="bg-white shadow rounded-lg overflow-hidden">
+<div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden">
 
-<table class="w-full text-left">
-    <thead class="bg-gray-200">
-        <tr>
-            <th class="p-3">ID</th>
-            <th class="p-3">Titre</th>
-            <th class="p-3">Utilisateur</th>
-            <th class="p-3">Statut</th>
-            <th class="p-3">Priorité</th>
-            <th class="p-3">Date</th>
-        </tr>
-    </thead>
+    <!-- Flowbite Table moderne dark ready -->
+    <div class="overflow-x-auto">
+        <table class="flowbite-table w-full">
+            <thead class="flowbite-thead">
+                <tr>
+                    <th class="p-4">ID</th>
+                    <th class="p-4">Titre</th>
+                    <th class="p-4">Utilisateur</th>
+                    <th class="p-4">Département</th>
+                    <th class="p-4">Statut</th>
+                    <th class="p-4">Priorité</th>
+                    <th class="p-4">Date</th>
+                    {% if request.user.role == "admin" %}
+                    <th class="p-4 text-right">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
 
-    <tbody>
+    <tbody id="ticket-list-tbody">
         {% for ticket in tickets %}
-        <tr class="border-b hover:bg-gray-50">
-
-            <td class="p-3">{{ ticket.id }}</td>
-            <td class="p-3 font-semibold">{{ ticket.titre }}</td>
-            <td class="p-3">{{ ticket.utilisateur }}</td>
-
-            <!-- Badge Statut -->
-            <td class="p-3">
-                <!-- CORRIGEZ les valeurs de statut -->
-                {% if ticket.statut == "ouvert" %}  <!-- "ouvert" pas "Ouvert" -->
-                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-sm">
-                        Ouvert
-                    </span>
-                {% elif ticket.statut == "en_cours" %}  <!-- "en_cours" pas "En cours" -->
-                    <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm">
-                        En cours
-                    </span>
-                {% else %}  <!-- "ferme" -->
-                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
-                        Résolu
-                    </span>
-                {% endif %}
-            </td>
-
-            <td>
-                {% if ticket.priorite == "critique" %}
-                    <span class="badge bg-dark">Critique</span>
-
-                {% elif ticket.priorite == "haute" %}
-                    <span class="badge bg-danger">Haute</span>
-
-                {% elif ticket.priorite == "moyenne" %}
-                    <span class="badge bg-warning">Moyenne</span>
-
+        <tr class="flowbite-tbody-hover">
+            <td class="px-4 py-3 font-medium whitespace-nowrap dark:text-white">{{ ticket.id }}</td>
+            <td class="px-6 py-4 font-semibold dark:text-white max-w-xs truncate">{{ ticket.titre }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ ticket.utilisateur.username }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ ticket.departement|default:"—" }}</td>
+            <td class="px-6 py-4">
+                {% if ticket.statut == "ouvert" %}
+                    <span class="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">Ouvert</span>
+                {% elif ticket.statut == "en_cours" %}
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">En cours</span>
                 {% else %}
-                    <span class="badge bg-success">Basse</span>
+                    <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Résolu</span>
                 {% endif %}
             </td>
-
-            <td class="p-3">{{ ticket.date_creation|date:"d/m/Y" }}</td>
-
-            {% if request.user.role == "technicien" or request.user.role == "admin" %}
-            <td class="p-3">
-                <a href="{% url 'assigner_ticket' ticket.id %}"
-                   class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-                    Assigner
-                </a>
+            <td class="px-6 py-4">
+                {% if ticket.priorite == "critique" %}
+                    <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-medium">Critique</span>
+                {% elif ticket.priorite == "haute" %}
+                    <span class="bg-orange-600 text-white text-xs px-2 py-1 rounded-full font-medium">Haute</span>
+                {% elif ticket.priorite == "moyenne" %}
+                    <span class="bg-amber-600 text-white text-xs px-2 py-1 rounded-full font-medium">Moyenne</span>
+                {% else %}
+                    <span class="bg-emerald-600 text-white text-xs px-2 py-1 rounded-full font-medium">Basse</span>
+                {% endif %}
             </td>
-            {% endif %}
-
+            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ ticket.date_creation|date:"d/m/Y H:i" }}</td>
+                    {% if request.user.role == "admin" %}
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                        <a href="{% url 'assigner_ticket' ticket.pk %}"
+                           class="flowbite-btn bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 font-medium inline-flex items-center gap-2 justify-center">
+                            Assigner
+                        </a>
+                    </td>
+                    {% endif %}
         </tr>
         {% empty %}
         <tr>
-            <td colspan="6" class="text-center p-6 text-gray-500">
-                Aucun ticket pour le moment
+            <td colspan="{% if request.user.role == 'admin' %}8{% else %}7{% endif %}" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                Aucun ticket pour le moment. <a href="#" class="text-blue-600 hover:underline font-medium" onclick="document.getElementById('ticket-modal').classList.remove('hidden')">Créer le premier ?</a>
             </td>
         </tr>
         {% endfor %}
     </tbody>
+        </table>
+    </div>
 
-</table>
+    <!-- Pagination Flowbite/HTMX -->
+    {% if is_paginated %}
+    <nav aria-label="Pagination" class="mt-8 flex items-center justify-between px-4 sm:px-0">
+        <div class="-mt-px flex w-0 flex-1">
+            {% if page_obj.has_previous %}
+            <a href="#" hx-get="?page={{ page_obj.previous_page_number }}" hx-target="#ticket-list-container" class="inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400">
+                Précédent
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:-mt-px sm:flex">
+            <span class="inline-flex items-center border-t-2 border-indigo-500 px-4 pt-4 text-sm font-medium text-indigo-600">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </span>
+        </div>
+        <div class=" -mt-px flex w-0 flex-1 justify-end">
+            {% if page_obj.has_next %}
+            <a href="#" hx-get="?page={{ page_obj.next_page_number }}" hx-target="#ticket-list-container" class="ml-3 inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400">
+                Suivant
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Assign Modal -->
+    <div id="assign-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl ring-1 ring-black ring-opacity-5 max-w-md w-full mx-auto transform overflow-hidden">
+                <div class="p-6 bg-white border-b border-gray-200 dark:border-gray-600">
+                    <h3 id="modal-title" class="text-xl font-bold dark:text-white">Assigner Ticket</h3>
+                </div>
+                <div id="assign-modal-body" class="p-6">
+                    <div class="text-center py-8">
+                        <div class="htmx-indicator inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
-</div>
+<!-- HTMX Global Events -->
+<script>
+document.body.addEventListener('htmx:afterRequest', function(e) {
+    if (e.detail.successful) {
+        // Close modals on success
+        const modals = ['ticket-modal', 'assign-modal'];
+        modals.forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        });
+        // Refresh table if needed
+        htmx.trigger('#ticket-list-tbody', 'reloadList');
+    }
+});
+</script>
+
 {% endblock %}

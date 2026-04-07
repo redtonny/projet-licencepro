@@ -2,50 +2,221 @@
 
 {% block content %}
 
-<h2 class="text-2xl font-bold mb-4">
-    Bienvenue {{ request.user.username }}
-</h2>
-
-<div class="mb-4">
-    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800">
-        Rôle : {{ request.user.role|title }}
-    </span>
+<div class="mb-6">
+    <h2 class="text-2xl font-bold mb-2">
+        Tableau de bord administrateur <br>
+        Bienvenue <span class="text-blue-600 font-extrabold" style="color: brown;">{{request.user.username}}</span> !
+    </h2>
+    <p class="text-gray-600 text-sm">
+        Vue d'ensemble sur les tickets, interventions et comptes.
+    </p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white shadow rounded-lg p-4">
-        <p class="text-gray-500 text-sm">Tickets totaux</p>
-        <p class="text-2xl font-bold">{{ total_tickets }}</p>
-    </div>
-
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
     <div class="bg-white shadow rounded-lg p-4">
         <p class="text-gray-500 text-sm">Tickets ouverts</p>
         <p class="text-2xl font-bold text-red-600">{{ tickets_ouverts }}</p>
     </div>
-
+    <div class="bg-white shadow rounded-lg p-4">
+        <p class="text-gray-500 text-sm">Tickets en cours</p>
+        <p class="text-2xl font-bold text-amber-600">{{ tickets_en_cours }}</p>
+    </div>
     <div class="bg-white shadow rounded-lg p-4">
         <p class="text-gray-500 text-sm">Tickets fermés</p>
         <p class="text-2xl font-bold text-green-600">{{ tickets_fermes }}</p>
     </div>
-
     <div class="bg-white shadow rounded-lg p-4">
         <p class="text-gray-500 text-sm">Interventions terminées</p>
         <p class="text-2xl font-bold text-emerald-600">{{ interventions_terminees }}</p>
     </div>
+    <div class="bg-white shadow rounded-lg p-4">
+        <p class="text-gray-500 text-sm">Interventions en cours</p>
+        <p class="text-2xl font-bold text-yellow-600">{{ interventions_en_cours }}</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4">
+        <p class="text-gray-500 text-sm">Comptes</p>
+        <p class="text-2xl font-bold text-blue-700">
+            {{ users_total }}
+        </p>
+    </div>
+</div>
+
+<!-- Graphiques -->
+<div class="bg-white shadow rounded-xl p-5 mb-6">
+    <h3 class="font-semibold mb-4">Graphiques</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-slate-50 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700 mb-2">Tickets par statut</p>
+            <canvas id="chartTickets" height="180"></canvas>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700 mb-2">Interventions</p>
+            <canvas id="chartInterventions" height="180"></canvas>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700 mb-2">Utilisateurs vs Techniciens</p>
+            <canvas id="chartUsers" height="180"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Vue récente -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white shadow rounded-xl p-5">
+        <h3 class="font-semibold mb-3">Tickets récents</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="text-xs text-gray-500 uppercase">
+                    <tr>
+                        <th class="p-2">ID</th>
+                        <th class="p-2">Titre</th>
+                        <th class="p-2">Statut</th>
+                        <th class="p-2">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in recent_tickets %}
+                    <tr class="border-t">
+                        <td class="p-2 font-medium">{{ t.id }}</td>
+                        <td class="p-2">{{ t.titre }}</td>
+                        <td class="p-2">
+                            {% if t.statut == "ouvert" %}
+                                <span class="text-red-700 font-medium">Ouvert</span>
+                            {% elif t.statut == "en_cours" %}
+                                <span class="text-amber-700 font-medium">En cours</span>
+                            {% else %}
+                                <span class="text-green-700 font-medium">Fermé</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-2 text-sm text-gray-600">{{ t.date_creation|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="p-3 text-sm text-gray-500">Aucun ticket récent</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-xl p-5">
+        <h3 class="font-semibold mb-3">Interventions récentes</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="text-xs text-gray-500 uppercase">
+                    <tr>
+                        <th class="p-2">ID</th>
+                        <th class="p-2">Ticket</th>
+                        <th class="p-2">Technicien</th>
+                        <th class="p-2">Terminé</th>
+                        <th class="p-2">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in recent_interventions %}
+                    <tr class="border-t">
+                        <td class="p-2 font-medium">{{ i.id }}</td>
+                        <td class="p-2">{{ i.ticket.titre }}</td>
+                        <td class="p-2">{{ i.technicien }}</td>
+                        <td class="p-2">
+                            {% if i.est_termine %}
+                                <span class="text-emerald-700 font-medium">Oui</span>
+                            {% else %}
+                                <span class="text-yellow-700 font-medium">Non</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-2 text-sm text-gray-600">{{ i.date_intervention|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-3 text-sm text-gray-500">Aucune intervention récente</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 {% if techniciens %}
-<div class="bg-white shadow rounded-lg p-4">
+<div class="bg-white shadow rounded-xl p-5 mt-4">
     <h3 class="font-semibold mb-3">Top techniciens (par interventions)</h3>
-    <ul class="space-y-1">
+    <ul class="space-y-2">
         {% for t in techniciens %}
-        <li class="flex justify-between">
-            <span>{{ t.technicien__username }}</span>
+        <li class="flex justify-between border-t pt-2">
+            <span class="font-medium">{{ t.technicien__username }}</span>
             <span class="text-sm text-gray-600">{{ t.total }} interventions</span>
         </li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ticketsLabels = ["Ouvert", "En cours", "Fermé"];
+    const ticketsValues = [{{ tickets_ouverts }}, {{ tickets_en_cours }}, {{ tickets_fermes }}];
+
+    const interventionsLabels = ["En cours", "Terminées"];
+    const interventionsValues = [{{ interventions_en_cours }}, {{ interventions_terminees }}];
+
+    const usersLabels = ["Utilisateurs", "Techniciens"];
+    const usersValues = [{{ users_utilisateur }}, {{ users_technicien }}];
+
+    const colorsTickets = ["#ef4444", "#f59e0b", "#22c55e"];
+    const colorsInterventions = ["#f59e0b", "#10b981"];
+    const colorsUsers = ["#3b82f6", "#14b8a6"];
+
+    const chartTickets = new Chart(document.getElementById("chartTickets"), {
+        type: "doughnut",
+        data: {
+            labels: ticketsLabels,
+            datasets: [{
+                data: ticketsValues,
+                backgroundColor: colorsTickets,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } }
+        }
+    });
+
+    const chartInterventions = new Chart(document.getElementById("chartInterventions"), {
+        type: "bar",
+        data: {
+            labels: interventionsLabels,
+            datasets: [{
+                label: "Nombre",
+                data: interventionsValues,
+                backgroundColor: colorsInterventions,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    const chartUsers = new Chart(document.getElementById("chartUsers"), {
+        type: "pie",
+        data: {
+            labels: usersLabels,
+            datasets: [{
+                data: usersValues,
+                backgroundColor: colorsUsers,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } }
+        }
+    });
+</script>
 
 {% endblock %}

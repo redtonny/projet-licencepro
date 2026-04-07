@@ -1,88 +1,80 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Ticket
-from .forms import TicketForm
-from .forms import AssignationForm
-from utilisateurs.models import Utilisateur
-from interventions.models import Intervention
-from django.db.models import Count, Q
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, CreateView, UpdateView
+from django.urls import reverse_lazy
 from django.contrib import messages
+from .models import Ticket
+from .forms import TicketForm, AssignationForm
+from utilisateurs.models import Utilisateur
+from django.db.models import Q
 
 
-@login_required
-def liste_tickets(request):
-    utilisateur = request.user
-
-    # Utiliser .strip() et comparer avec les valeurs EXACTES
-    if utilisateur.role and utilisateur.role.strip() == "admin":
-        tickets = Ticket.objects.all()    
-    elif utilisateur.role and utilisateur.role.strip() == "technicien":
-        # Un technicien voit :
-        # - Les tickets qui lui sont assignés
-        # - OU les tickets non assignés (null)
-        tickets = Ticket.objects.filter(
-            Q(technicien=utilisateur) | 
-            Q(technicien__isnull=True)
-        ).distinct()   
-    else:  # utilisateur normal
-        tickets = Ticket.objects.filter(utilisateur=utilisateur)
-
-    context = {"tickets": tickets}
-    return render(request, "ticket/liste.html", context)
+class TicketPermissionMixin(UserPassesTestMixin):
+    """Permission par role pour tickets"""
+    
+    def test_func(self):
+        role = getattr(self.request.user, "role", "").strip()
+        return role in ("admin", "technicien", "utilisateur")
 
 
-@login_required
-def creer_ticket(request):
+class TicketListView(LoginRequiredMixin, TicketPermissionMixin, ListView):
+    model = Ticket
+    template_name = "ticket/liste.html"
+    context_object_name = "tickets"
+    paginate_by = 20
 
-    if request.method == "POST":
-        form = TicketForm(request.POST, utilisateur=request.user)
+    def get_queryset(self):
+        user = self.request.user
+        role = getattr(user, "role", "").strip()
+        
+        if role == "admin":
+            return Ticket.objects.all()
+        elif role == "technicien":
+            # Les tickets sans technicien ne doivent plus être visibles :
+            # l'assignation est réservée à l'administrateur.
+            return Ticket.objects.filter(technicien=user)
+        else:  # utilisateur
+            return Ticket.objects.filter(utilisateur=user)
 
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.utilisateur = request.user
-            # Logique métier : rattacher le département automatiquement
-            departement = getattr(request.user, "departement", None)
-            if departement:
-                ticket.departement = departement.nom
-            # Toujours commencer au statut "ouvert"
-            ticket.statut = "ouvert"
-            ticket.save()
-            messages.success(request, "Ticket créé avec succès.")
-            return redirect("liste_tickets")
 
-    else:
-        form = TicketForm(utilisateur=request.user)
+class TicketCreateView(LoginRequiredMixin, TicketPermissionMixin, CreateView):
+    model = Ticket
+    form_class = TicketForm
+    template_name = "ticket/creation.html"
+    success_url = reverse_lazy("liste_tickets")
 
-    context = {"form": form}
-    return render(request, "ticket/creation.html", context)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["utilisateur"] = self.request.user
+        return kwargs
 
-@login_required
-def assigner_ticket(request, pk):
+    def form_valid(self, form):
+        ticket = form.save(commit=False)
+        ticket.utilisateur = self.request.user
+        departement = getattr(self.request.user, "departement", None)
+        if departement:
+            ticket.departement = departement.nom
+        ticket.statut = "ouvert"
+        ticket.save()
+        messages.success(self.request, "Ticket créé avec succès.")
+        return super().form_valid(form)
 
-    ticket = get_object_or_404(Ticket, id=pk)
 
-    # Seuls les techniciens ou admins peuvent assigner un ticket
-    role = getattr(request.user, "role", "").strip()
-    if role not in ("technicien", "admin"):
-        raise PermissionDenied("Vous n'êtes pas autorisé à assigner des tickets.")
+class TicketAssignView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Ticket
+    form_class = AssignationForm
+    template_name = "ticket/assigner_ticket.html"
+    pk_url_kwarg = "pk"
+    success_url = reverse_lazy("liste_tickets")
 
-    if request.method == "POST":
-        form = AssignationForm(request.POST, instance=ticket)
+    def test_func(self):
+        role = getattr(self.request.user, "role", "").strip()
+        return role == "admin"
 
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Ticket assigné / mis à jour avec succès.")
-            return redirect("liste_tickets")
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["ticket"] = self.object
+        return context
 
-    else:
-        form = AssignationForm(instance=ticket)
-
-    context = {
-        "form": form,
-        "ticket": ticket
-    }
-
-    return render(
-        request,"ticket/assigner_ticket.html",context
-    )
+    def form_valid(self, form):
+        messages.success(self.request, "Ticket assigné / mis à jour avec succès.")
+        return super().form_valid(form)

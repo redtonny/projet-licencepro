@@ -1,10 +1,19 @@
+{% load static %}
+
 <!DOCTYPE html>
 
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Parc Informatique</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.1/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" />
+    <link href="{% static 'css/modern.css' %}" rel="stylesheet">
+  
 </head>
 
 <body class="bg-slate-100 min-h-screen">
@@ -12,38 +21,71 @@
 <nav class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-lg">
     <h1 class="font-bold text-lg tracking-wide">Parc Informatique</h1>
 
-    <div class="flex items-center gap-4 text-sm">
-        <a href="{% url 'dashboard' %}" class="hover:text-blue-300 transition">Dashboard</a>
-        <a href="{% url 'liste_tickets' %}" class="hover:text-blue-300 transition">Tickets</a>
-        <a href="{% url 'liste_equipements' %}" class="hover:text-blue-300 transition">Parc</a>
-        <a href="{% url 'liste_interventions' %}" class="hover:text-blue-300 transition">Interventions</a>
-        <a href="{% url 'liste_fournisseurs' %}" class="hover:text-blue-300 transition">Achats</a>
+    <!-- Dark Mode Toggle -->
+    <button @click="$store.theme.toggle()" x-data="{ dark: false }" x-init="$store.theme = { toggle() { 
+        dark = !dark; document.documentElement.classList.toggle('dark', dark); localStorage.theme = dark ? 'dark' : 'light' } }" 
+        class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
+        <svg x-show="!dark" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+        </svg>
+        <svg x-show="dark" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+        </svg>
+    </button>
 
+    <div class="flex items-center gap-4 text-sm">
         {% if request.user.is_authenticated and request.user.role == "admin" %}
-            <a href="{% url 'creer_utilisateur' %}" class="hover:text-blue-300 transition">Nouvel utilisateur</a>
+            <a href="{% url 'dashboard' %}" class="hover:text-blue-300 transition">Dashboard</a>
+            <a href="{% url 'liste_tickets' %}" class="hover:text-blue-300 transition">Tickets</a>
+            <a href="{% url 'liste_equipements' %}" class="hover:text-blue-300 transition">Parc</a>
+            <a href="{% url 'liste_interventions' %}" class="hover:text-blue-300 transition">Interventions</a>
+            <a href="{% url 'liste_fournisseurs' %}" class="hover:text-blue-300 transition">Achats</a>
+            <a href="{% url 'gerer_utilisateurs' %}" class="hover:text-blue-300 transition">Nouvel utilisateur</a>
+        {% else %}
+            <a href="{% url 'liste_tickets' %}" class="hover:text-blue-300 transition">Tickets</a>
+            {% if request.user.is_authenticated and request.user.role == "technicien" %}
+                <a href="{% url 'liste_interventions' %}" class="hover:text-blue-300 transition">Interventions</a>
+            {% endif %}
         {% endif %}
 
         <form method="post" action="{% url 'custom_logout' %}">
             {% csrf_token %}
             <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition shadow-sm">
-                Logout
+                Deconnexion
             </button>
         </form>
     </div>
 </nav>
 
 <!-- Messages -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}
+<script>
+    {% for message in messages %}
+        Swal.fire({
+            title: "Connexion réussie",
+            text: "{{ message }}",
+            icon: "success",
+            confirmButtonText: "OK"
+        });
+    {% endfor %}
+</script>
+{% endif %}
 <div class="p-4 space-y-2 max-w-3xl mx-auto">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="px-4 py-2 rounded shadow text-sm
-                        {% if message.tags == 'success' %}bg-green-100 text-green-800
-                        {% elif message.tags == 'error' %}bg-red-100 text-red-800
-                        {% else %}bg-blue-100 text-blue-800{% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+    <template x-if="messages.length">
+        <div class="fixed top-4 right-4 space-y-2 z-50 max-w-md" x-data="{ messages: [
+            {% for message in messages %}
+            { text: `{{ message }}`, type: '{{ message.tags }}' },
+            {% endfor %}
+        ], init() { setTimeout(() => this.messages = [], 5000) } }">
+            <template x-for="msg in messages" :key="msg.text">
+                <div :class="msg.type == 'success' ? 'bg-green-500' : msg.type == 'error' ? 'bg-red-500' : 'bg-blue-500' "
+                     class="p-4 rounded-lg shadow-xl text-white transform translate-x-full transition-all animate-slide-in-right">
+                    <span x-text="msg.text"></span>
+                </div>
+            </template>
+        </div>
+    </template>
 </div>
 
 <!-- Content -->

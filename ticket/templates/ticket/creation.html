@@ -2,76 +2,80 @@
 
 {% block content %}
 
-<div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6">
-    <h2 class="text-2xl font-bold mb-4">
-        Créer un ticket
-    </h2>
+<div class="space-y-6" id="ticket-create-form">
+    <h3 class="text-xl font-bold dark:text-white mb-4">
+        Nouveau Ticket
+    </h3>
 
     <form method="post">
         {% csrf_token %}
 
         {{ form.non_field_errors }}
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-            {{ form.titre }}
-            {% if form.titre.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.titre.errors|striptags }}</p>
-            {% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Titre -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Titre <span class="text-red-500">*</span></label>
+                {{ form.titre }}
+                {% if form.titre.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.titre.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Description <span class="text-red-500">*</span></label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Équipement -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Équipement</label>
+                {{ form.equipement }}
+                {% if form.equipement.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.equipement.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Type de demande -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Type</label>
+                {{ form.type_demande }}
+                {% if form.type_demande.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.type_demande.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Priorité -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Priorité <span class="text-red-500">*</span></label>
+                {{ form.priorite }}
+                {% if form.priorite.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.priorite.errors|striptags }}</p>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            {{ form.description }}
-            {% if form.description.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.description.errors|striptags }}</p>
-            {% endif %}
-        </div>
+        {{ form.non_field_errors }}
+        {{ form.hidden_fields }}
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Équipement</label>
-            {{ form.equipement }}
-            {% if form.equipement.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.equipement.errors|striptags }}</p>
-            {% endif %}
-            {% if request.user.role == "admin" or request.user.role == "technicien" %}
-                <a href="{% url 'creer_equipement' %}" class="text-xs text-blue-600 hover:underline">
-                    + Ajouter un nouvel équipement
-                </a>
-            {% endif %}
-        </div>
-
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
-            {{ form.type_demande }}
-            {% if form.type_demande.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.type_demande.errors|striptags }}</p>
-            {% endif %}
-            {% if request.user.role == "admin" or request.user.role == "technicien" %}
-                <a href="{% url 'creer_type_intervention' %}" class="text-xs text-blue-600 hover:underline">
-                    + Ajouter un type d'intervention
-                </a>
-            {% endif %}
-        </div>
-
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Priorité</label>
-            {{ form.priorite }}
-            {% if form.priorite.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.priorite.errors|striptags }}</p>
-            {% endif %}
-        </div>
-
-        <div class="mt-4 flex gap-2">
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                Enregistrer
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row gap-3">
+            <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl focus:ring-4 focus:ring-emerald-300">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Créer le ticket
             </button>
-            <a href="{% url 'liste_tickets' %}" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-               Annuler
+            <a href="{% url 'liste_tickets' %}"
+               class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl inline-flex items-center justify-center">
+                Annuler
             </a>
         </div>
-
     </form>
+
 </div>
 
 {% endblock %}

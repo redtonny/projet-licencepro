@@ -35,3 +35,19 @@ class DepartementForm(forms.ModelForm):
         for name, field in self.fields.items():
             existing_classes = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{existing_classes} {BASE_INPUT_CLASS}".strip()
+
+
+class UtilisateurAdminEditForm(forms.ModelForm):
+    """
+    Formulaire utilisé par l'admin pour gérer les comptes utilisateur/technicien.
+    """
+
+    class Meta:
+        model = Utilisateur
+        fields = ["username", "first_name", "last_name", "email", "role", "departement", "is_active"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            existing_classes = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{existing_classes} {BASE_INPUT_CLASS}".strip()

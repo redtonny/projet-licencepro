@@ -8,4 +8,6 @@ urlpatterns = [
 
     path("types-equipement/nouveau/", views.creer_type_equipement, name="creer_type_equipement"),
     path("etats/nouveau/", views.creer_etat, name="creer_etat"),
+
+    path("equipements/<int:pk>/supprimer/", views.supprimer_equipement, name="supprimer_equipement"),
 ]

@@ -27,7 +27,35 @@
                 <td class="p-3 font-semibold">{{ equipement.nom }}</td>
                 <td class="p-3">{{ equipement.numero_serie }}</td>
                 <td class="p-3">{{ equipement.type_equipement }}</td>
-                <td class="p-3">{{ equipement.etat }}</td>
+                <td class="p-3">
+                    {% if equipement.etat %}
+                        {% with etat_nom=equipement.etat.nom|lower %}
+                            {% if 'bon' in etat_nom or 'actif' in etat_nom or 'disponible' in etat_nom %}
+                                <span class="inline-flex items-center gap-2 text-green-700">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                    {{ equipement.etat }}
+                                </span>
+                            {% elif 'moyen' in etat_nom or 'attention' in etat_nom or 'moyenne' in etat_nom %}
+                                <span class="inline-flex items-center gap-2 text-yellow-700">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                    {{ equipement.etat }}
+                                </span>
+                            {% elif 'defaut' in etat_nom or 'hors' in etat_nom or 'inactif' in etat_nom or 'bloque' in etat_nom %}
+                                <span class="inline-flex items-center gap-2 text-red-700">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    {{ equipement.etat }}
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-2 text-slate-700">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                    {{ equipement.etat }}
+                                </span>
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td class="p-3">
                     {% if equipement.date_achat %}
                         {{ equipement.date_achat|date:"d/m/Y" }}
@@ -40,6 +68,12 @@
                        class="text-blue-600 hover:underline text-sm">
                         Modifier
                     </a>
+                    {% if request.user.role == "admin" %}
+                        <a href="{% url 'supprimer_equipement' equipement.id %}"
+                           class="text-red-600 hover:underline text-sm ml-3">
+                            Supprimer
+                        </a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
