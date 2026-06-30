@@ -1,7 +1,14 @@
+from io import BytesIO
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
+from django.utils import timezone
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 from .models import Intervention, TypeIntervention
 from .forms import InterventionForm, TypeInterventionForm
 from ticket.models import Ticket
@@ -107,3 +114,61 @@ def creer_type_intervention(request):
     else:
         form = TypeInterventionForm()
     return render(request, "interventions/form_type_intervention.html", {"form": form})
+
+
+def build_pdf_response(filename, title, headers, rows, user):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=18)
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph(title, styles["Title"]),
+        Spacer(1, 12),
+        Paragraph(f"Exporté par : {user.username}", styles["Normal"]),
+        Paragraph(f"Date d'export : {timezone.now().strftime('%d/%m/%Y %H:%M')}", styles["Normal"]),
+        Spacer(1, 12),
+    ]
+    data = [headers] + rows
+    table = Table(data, repeatRows=1, hAlign="LEFT")
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+    ]))
+    story.append(table)
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def export_interventions_pdf(request):
+    role = getattr(request.user, "role", "").strip()
+    interventions = Intervention.objects.select_related("ticket", "technicien")
+
+    if role == "admin":
+        pass
+    elif role == "technicien":
+        interventions = interventions.filter(technicien=request.user)
+    else:
+        return redirect("liste_tickets")
+
+    headers = ["ID", "Ticket", "Technicien", "Date intervention", "Terminé"]
+    rows = [
+        [
+            str(intervention.id),
+            intervention.ticket.titre,
+            intervention.technicien.username if intervention.technicien else "-",
+            intervention.date_intervention.strftime("%d/%m/%Y %H:%M"),
+            "Oui" if intervention.est_termine else "Non",
+        ]
+        for intervention in interventions
+    ]
+    return build_pdf_response("interventions.pdf", "Liste des interventions", headers, rows, request.user)

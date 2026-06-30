@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Équipements</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 24px; color: #222; }
+        h1 { font-size: 18px; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Liste des équipements</h1>
+    <p>Exporté par : {{ user.username }}</p>
+    <p>Date d'export : {{ date_export|date:"d/m/Y H:i" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Numéro de série</th>
+                <th>Type</th>
+                <th>État</th>
+                <th>Département</th>
+                <th>Utilisateur</th>
+                <th>Date d'achat</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for equipement in equipements %}
+            <tr>
+                <td>{{ equipement.nom }}</td>
+                <td>{{ equipement.numero_serie }}</td>
+                <td>{{ equipement.type_equipement.nom }}</td>
+                <td>{{ equipement.etat.nom|default:"-" }}</td>
+                <td>{{ equipement.departement.nom|default:"-" }}</td>
+                <td>{{ equipement.utilisateur.username|default:"-" }}</td>
+                <td>{% if equipement.date_achat %}{{ equipement.date_achat|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                <td>{{ equipement.description }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">Aucun équipement à exporter.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

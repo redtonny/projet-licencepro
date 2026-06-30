@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Contributions des utilisateurs</h2>
+        <p class="text-gray-600 text-sm mt-1">Filtre administrateur pour rechercher les utilisateurs et leurs contributions (équipements, tickets).</p>
+    </div>
+    <a href="{% url 'gerer_utilisateurs' %}"
+       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+        ← Retour utilisateurs
+    </a>
+</div>
+
+<div class="bg-white shadow rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-4 font-medium">Utilisateur</th>
+                    <th class="p-4 font-medium">Département</th>
+                    <th class="p-4 font-medium text-center">Équipements</th>
+                    <th class="p-4 font-medium text-center">Tickets</th>
+                    <th class="p-4 font-medium text-right">Rôle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for utilisateur in utilisateurs %}
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="p-4 font-medium">{{ utilisateur.username }}</td>
+                    <td class="p-4">{{ utilisateur.departement.nom|default:"—" }}</td>
+                    <td class="p-4 text-center">
+                        <span class="font-bold text-blue-600">{{ utilisateur.nb_equipements|default:0 }}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <span class="font-bold text-green-600">{{ utilisateur.nb_tickets|default:0 }}</span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium
+                            {% if user.role == 'technicien' %}bg-yellow-100 text-yellow-800
+                            {% elif user.role == 'utilisateur' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ utilisateur.role|title }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="p-12 text-center text-gray-500">
+                        Aucun utilisateur trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{% endblock %}

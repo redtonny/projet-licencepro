@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path("interventions/", views.liste_interventions, name="liste_interventions"),
+    path("interventions/export-pdf/", views.export_interventions_pdf, name="export_interventions_pdf"),
     path("interventions/nouvelle/", views.creer_intervention, name="creer_intervention"),
     path("interventions/<int:pk>/modifier/", views.editer_intervention, name="editer_intervention"),
 

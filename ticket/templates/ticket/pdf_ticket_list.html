@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Tickets</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #222; margin: 24px; }
+        h1 { font-size: 18px; margin-bottom: 10px; }
+        p { margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        .footer { margin-top: 16px; font-size: 11px; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Liste des tickets</h1>
+    <p>Exporté par : {{ user.username }}</p>
+    <p>Date d'export : {{ date_export|date:"d/m/Y H:i" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Titre</th>
+                <th>Utilisateur</th>
+                <th>Département</th>
+                <th>Statut</th>
+                <th>Priorité</th>
+                <th>Date création</th>
+                <th>Technicien</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.numero_ticket|default:ticket.id }}</td>
+                <td>{{ ticket.titre }}</td>
+                <td>{{ ticket.utilisateur.username }}</td>
+                <td>{{ ticket.departement }}</td>
+                <td>{{ ticket.get_statut_display|default:ticket.statut }}</td>
+                <td>{{ ticket.get_priorite_display|default:ticket.priorite }}</td>
+                <td>{{ ticket.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{{ ticket.technicien.username|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">Aucun ticket à exporter.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

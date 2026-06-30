@@ -34,4 +34,5 @@ urlpatterns = [
     path('parcinfo/', include('Parcinfo.urls')),
     path('interventions/', include('interventions.urls')),
     path('achats/', include('achats.urls')),
+    path('app/notifications/', include('notifications.urls')),
 ]

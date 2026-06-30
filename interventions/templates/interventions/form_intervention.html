@@ -29,11 +29,46 @@
         </div>
 
         <div class="flex items-center gap-3">
-            {{ form.est_termine }}
-            <label class="text-sm font-medium text-gray-700">{{ form.est_termine.label }}</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+                {{ form.est_termine }}
+                <span class="ml-3 text-sm font-medium text-gray-700">{{ form.est_termine.label }}</span>
+            </label>
             {% if form.est_termine.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.est_termine.errors|striptags }}</p>
+            <p class="text-red-600 text-xs mt-1">{{ form.est_termine.errors|striptags }}</p>
             {% endif %}
+            <style>
+                input[type="checkbox"] {
+                    width: 2.5rem;
+                    height: 1.25rem;
+                    appearance: none;
+                    background-color: #d1d5db;
+                    border-radius: 9999px;
+                    position: relative;
+                    cursor: pointer;
+                    transition: background-color 0.3s;
+                }
+        
+                input[type="checkbox"]:checked {
+                    background-color: #059669;
+                    /* emerald-600 */
+                }
+        
+                input[type="checkbox"]::after {
+                    content: '';
+                    position: absolute;
+                    top: 2px;
+                    left: 2px;
+                    width: 1rem;
+                    height: 1rem;
+                    background: white;
+                    border-radius: 9999px;
+                    transition: transform 0.3s;
+                }
+        
+                input[type="checkbox"]:checked::after {
+                    transform: translateX(1.25rem);
+                }
+            </style>
         </div>
 
         <div class="mt-4 flex gap-2">

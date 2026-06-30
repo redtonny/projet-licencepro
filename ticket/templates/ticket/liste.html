@@ -37,6 +37,16 @@
         </div>
     </div>
 
+    <a href="{% url 'export_tickets_pdf' %}"
+       class="bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-lg transition dark:bg-gray-700 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <path d="M8 13h8"/>
+            <path d="M8 17h8"/>
+        </svg>
+        Exporter PDF
+    </a>
 </div>
 
 <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden">
@@ -46,7 +56,7 @@
         <table class="flowbite-table w-full">
             <thead class="flowbite-thead">
                 <tr>
-                    <th class="p-4">ID</th>
+    <th class="p-4">Numéro</th>
                     <th class="p-4">Titre</th>
                     <th class="p-4">Utilisateur</th>
                     <th class="p-4">Département</th>
@@ -62,17 +72,17 @@
     <tbody id="ticket-list-tbody">
         {% for ticket in tickets %}
         <tr class="flowbite-tbody-hover">
-            <td class="px-4 py-3 font-medium whitespace-nowrap dark:text-white">{{ ticket.id }}</td>
+            <td class="px-4 py-3 font-medium whitespace-nowrap dark:text-white">{{ ticket.numero_ticket|default:ticket.id }}</td>
             <td class="px-6 py-4 font-semibold dark:text-white max-w-xs truncate">{{ ticket.titre }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ ticket.utilisateur.username }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ ticket.departement|default:"—" }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ ticket.departement }}</td>
             <td class="px-6 py-4">
                 {% if ticket.statut == "ouvert" %}
                     <span class="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">Ouvert</span>
                 {% elif ticket.statut == "en_cours" %}
                     <span class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">En cours</span>
                 {% else %}
-                    <span class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Résolu</span>
+                    <span class="bg-green-100 text-green-800 text-xs font-medium me-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">Résolu</span>
                 {% endif %}
             </td>
             <td class="px-6 py-4">
@@ -99,7 +109,7 @@
         {% empty %}
         <tr>
             <td colspan="{% if request.user.role == 'admin' %}8{% else %}7{% endif %}" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                Aucun ticket pour le moment. <a href="#" class="text-blue-600 hover:underline font-medium" onclick="document.getElementById('ticket-modal').classList.remove('hidden')">Créer le premier ?</a>
+                Aucun ticket pour le moment. <a href="{% url 'creer_ticket' %}" class="text-blue-600 hover:underline font-medium" onclick="document.getElementById('ticket-modal').classList.remove('hidden')">Créer le premier ?</a>
             </td>
         </tr>
         {% endfor %}

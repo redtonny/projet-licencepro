@@ -14,6 +14,7 @@ class TicketForm(forms.ModelForm):
             "description",
             "equipement",
             "type_demande",
+            "departement",
             "priorite",
         ]
 

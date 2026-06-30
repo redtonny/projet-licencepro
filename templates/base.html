@@ -9,6 +9,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.1/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" />
@@ -21,18 +22,7 @@
 <nav class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-lg">
     <h1 class="font-bold text-lg tracking-wide">Parc Informatique</h1>
 
-    <!-- Dark Mode Toggle -->
-    <button @click="$store.theme.toggle()" x-data="{ dark: false }" x-init="$store.theme = { toggle() { 
-        dark = !dark; document.documentElement.classList.toggle('dark', dark); localStorage.theme = dark ? 'dark' : 'light' } }" 
-        class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
-        <svg x-show="!dark" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
-        </svg>
-        <svg x-show="dark" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-        </svg>
-    </button>
-
+    
     <div class="flex items-center gap-4 text-sm">
         {% if request.user.is_authenticated and request.user.role == "admin" %}
             <a href="{% url 'dashboard' %}" class="hover:text-blue-300 transition">Dashboard</a>
@@ -47,7 +37,43 @@
                 <a href="{% url 'liste_interventions' %}" class="hover:text-blue-300 transition">Interventions</a>
             {% endif %}
         {% endif %}
-
+        <!-- Dropdown notifications — à placer dans ta navbar -->
+        <div class="relative" id="notif-container">
+        
+            <!-- Bouton cloche -->
+            <button id="notif-btn" class="relative p-2 text-gray-300 hover:text-white transition">
+                <i class="fas fa-bell text-xl"></i>
+                <span id="notif-badge"
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 items-center justify-center hidden">
+                    0
+                </span>
+            </button>
+        
+            <!-- Dropdown -->
+            <div id="notif-dropdown"
+                 class="hidden absolute right-0 mt-2 w-80 bg-white border-2 border-blue-500 rounded-xl shadow-2xl z-[9999]">
+        
+                <!-- Header -->
+                <div class="flex justify-between items-center p-4 border-b">
+                    <span class="font-bold text-gray-800">Notifications</span>
+                    <button id="tout-lu-btn" class="text-xs text-blue-600 hover:underline">
+                        Tout marquer comme lu
+                    </button>
+                </div>
+        
+                <!-- Liste -->
+                <ul id="notif-liste" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                    <li class="p-4 text-center text-gray-400 text-sm">Chargement...</li>
+                </ul>
+        
+                <!-- Footer -->
+                <div class="p-3 border-t text-center">
+                    <a href="#" class="text-sm text-blue-600 hover:underline">
+                        Voir toutes les notifications
+                    </a>
+                </div>
+            </div>
+        </div>
         <form method="post" action="{% url 'custom_logout' %}">
             {% csrf_token %}
             <button class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition shadow-sm">
@@ -55,6 +81,7 @@
             </button>
         </form>
     </div>
+    
 </nav>
 
 <!-- Messages -->
@@ -63,7 +90,7 @@
 <script>
     {% for message in messages %}
         Swal.fire({
-            title: "Connexion réussie",
+            //title: "Connexion réussie",
             text: "{{ message }}",
             icon: "success",
             confirmButtonText: "OK"
@@ -94,5 +121,94 @@
         {% block content %}{% endblock %}
     </div>
 </main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const btn = document.getElementById('notif-btn');
+        const dropdown = document.getElementById('notif-dropdown');
+        const badge = document.getElementById('notif-badge');
+        const liste = document.getElementById('notif-liste');
+
+        if (!btn) {
+            console.error('Bouton notifications introuvable !');
+            return;
+        }
+
+        // Ouvrir / fermer
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) {
+                chargerNotifications();
+            }
+        });
+
+        // Fermer si clic en dehors
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('notif-container').contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Charger les notifications
+        function chargerNotifications() {
+            console.log('Chargement des notifications...');
+            fetch('/app/notifications/')
+                .then(r => r.json())
+                .then(data => {
+                    console.log('Données reçues :', data);
+
+                    if (data.nb_non_lues > 0) {
+                        badge.textContent = data.nb_non_lues;
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+
+                    if (data.notifications.length === 0) {
+                        liste.innerHTML = '<li class="p-6 text-center text-gray-400 text-sm">Aucune notification</li>';
+                        return;
+                    }
+
+                    liste.innerHTML = data.notifications.map(n => `
+          <li class="p-3 hover:bg-gray-50 cursor-pointer ${n.lu ? 'opacity-60' : 'bg-blue-50'}"
+              onclick="ouvrirNotif(${n.id}, '${n.lien}')">
+            <p class="text-sm font-medium text-gray-800">${n.message}</p>
+            <p class="text-xs text-gray-400 mt-1">${n.date}</p>
+          </li>
+        `).join('');
+                })
+                .catch(err => console.error('Erreur fetch:', err));
+        }
+
+        // Tout marquer comme lu
+        document.getElementById('tout-lu-btn').addEventListener('click', () => {
+            fetch('/app/notifications/tout-lu/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            }).then(() => chargerNotifications());
+        });
+
+        // Chargement initial
+        chargerNotifications();
+
+    });
+
+    function ouvrirNotif(id, lien) {
+        fetch(`/app/notifications/${id}/lu/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(() => {
+            if (lien) window.location.href = lien;
+        });
+    }
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+</script>
 </body>
 </html>

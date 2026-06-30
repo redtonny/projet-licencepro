@@ -1,4 +1,5 @@
 from django.db import models
+from utilisateurs.models import Departement, Utilisateur
 
 class TypeEquipement(models.Model):
     nom= models.CharField()
@@ -17,8 +18,10 @@ class Equipement(models.Model):
     numero_serie= models.CharField()
     type_equipement= models.ForeignKey(TypeEquipement, on_delete=models.CASCADE)
     etat= models.ForeignKey(Etat, on_delete=models.SET_NULL, null=True)
+    departement = models.ForeignKey(Departement, on_delete=models.SET_NULL, null=True, blank=True)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True)
     date_achat= models.DateField(null=True, blank=True)
     description= models.CharField()
     
     def __str__(self):
-        return f"{self.nom} ({self.numero_serie})"
+        return f"{self.nom} ({self.numero_serie}) - {self.departement} - {self.utilisateur}"

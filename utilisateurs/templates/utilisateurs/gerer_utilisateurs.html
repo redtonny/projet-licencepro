@@ -7,10 +7,16 @@
         <h2 class="text-2xl font-bold">Gestion des utilisateurs</h2>
         <p class="text-gray-600 text-sm mt-1">Ajouter, modifier ou supprimer les comptes utilisateur/technicien.</p>
     </div>
-    <a href="{% url 'creer_utilisateur' %}"
-       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
-        + Ajouter
-    </a>
+    <div class="flex gap-3">
+        <a href="{% url 'creer_utilisateur' %}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+            + Ajouter
+        </a>
+        <a href="{% url 'contributions_users' %}"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+            Voir contributions
+        </a>
+    </div>
 </div>
 
 <div class="bg-white shadow rounded-xl overflow-hidden">

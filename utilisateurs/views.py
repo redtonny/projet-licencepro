@@ -1,6 +1,6 @@
 from ticket.models import Ticket
 from interventions.models import Intervention
-from django.db.models import Count
+from django.db.models import Count, OuterRef
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -101,6 +101,14 @@ def after_login(request):
     
     return redirect("liste_tickets")
 
+@login_required
+def contributions_users(request):
+    utilisateurs= Utilisateur.objects.annotate(
+        nb_equipements=Count ('equipement', distinct=True),
+        nb_tickets= Count ('ticket', distinct=True),).select_related('departement').order_by('username')
+    
+    return render(request, 'utilisateurs/contributions.html',
+                  {'utilisateurs':utilisateurs})
 
 @login_required
 def creer_utilisateur(request):
